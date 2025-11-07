@@ -19,6 +19,15 @@ public class Customer {
 	}
 
 	public void addAccount(Account account) {
-		accounts.add(account);		
+		accounts.add(account);
+	}
+
+	public boolean hasAccount(String accountName) {
+		for(Account a : accounts) {
+			if(a.getAccountName().equalsIgnoreCase(accountName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
