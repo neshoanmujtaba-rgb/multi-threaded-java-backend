@@ -12,8 +12,11 @@ public class Customer {
 	
 	public String accountsToString() {
 		String s = "";
-		for(Account a : accounts) {
-			s += a.toString();
+		for(int i = 0; i < accounts.size(); i++) {
+			s += accounts.get(i).toString();
+			if(i < accounts.size() - 1) {
+				s += "\n";
+			}
 		}
 		return s;
 	}
