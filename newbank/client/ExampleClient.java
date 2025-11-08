@@ -20,11 +20,14 @@ public class ExampleClient extends Thread{
 		bankServerOut = new PrintWriter(server.getOutputStream(), true); 
 		
 		bankServerResponceThread = new Thread() {
-			private BufferedReader bankServerIn = new BufferedReader(new InputStreamReader(server.getInputStream())); 
+			private BufferedReader bankServerIn = new BufferedReader(new InputStreamReader(server.getInputStream()));
 			public void run() {
 				try {
 					while(true) {
 						String responce = bankServerIn.readLine();
+						if(responce == null) {
+							break;
+						}
 						System.out.println(responce);
 					}
 				} catch (IOException e) {

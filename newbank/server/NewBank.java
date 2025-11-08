@@ -40,16 +40,33 @@ public class NewBank {
 	// commands from the NewBank customer are processed in this method
 	public synchronized String processRequest(CustomerID customer, String request) {
 		if(customers.containsKey(customer.getKey())) {
-			switch(request) {
+			String[] parts = request.split(" ", 2);
+			String command = parts[0];
+
+			switch(command) {
 			case "SHOWMYACCOUNTS" : return showMyAccounts(customer);
+			case "NEWACCOUNT" :
+				if(parts.length == 2) {
+					return newAccount(customer, parts[1]);
+				}
+				return "FAIL";
 			default : return "FAIL";
 			}
 		}
 		return "FAIL";
 	}
-	
+
 	private String showMyAccounts(CustomerID customer) {
 		return (customers.get(customer.getKey())).accountsToString();
+	}
+
+	private String newAccount(CustomerID customer, String accountName) {
+		Customer c = customers.get(customer.getKey());
+		if(c.hasAccount(accountName)) {
+			return "FAIL";
+		}
+		c.addAccount(new Account(accountName, 0.0));
+		return "SUCCESS";
 	}
 
 }
