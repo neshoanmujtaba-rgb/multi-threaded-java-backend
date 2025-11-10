@@ -6,6 +6,7 @@ public class NewBank {
 	
 	private static final NewBank bank = new NewBank();
 	private HashMap<String,Customer> customers;
+	private AuthenticationManager authManager;  // Separate auth system
 	
 	private NewBank() {
 		customers = new HashMap<>();
@@ -16,14 +17,24 @@ public class NewBank {
 		Customer bhagy = new Customer();
 		bhagy.addAccount(new Account("Main", 1000.0));
 		customers.put("Bhagy", bhagy);
+		authManager.registerUser("Bhagy", "1234"); 
 		
 		Customer christina = new Customer();
 		christina.addAccount(new Account("Savings", 1500.0));
 		customers.put("Christina", christina);
+		authManager.registerUser("Christina", "5678"); 
 		
 		Customer john = new Customer();
 		john.addAccount(new Account("Checking", 250.0));
 		customers.put("John", john);
+		authManager.registerUser("John", "abcd");
+
+		// Print demo login when server connection starts
+		System.out.println("\n (<3 ========== DEMO LOGINS ==========");
+		System.out.println("Username: Bhagy      Password: 1234");
+		System.out.println("Username: Christina  Password: 5678");
+		System.out.println("Username: John       Password: abcd");
+		System.out.println("==================================== :)\n");
 	}
 	
 	public static NewBank getBank() {
@@ -31,8 +42,12 @@ public class NewBank {
 	}
 	
 	public synchronized CustomerID checkLogInDetails(String userName, String password) {
-		if(customers.containsKey(userName)) {
-			return new CustomerID(userName);
+		// run login through AuthenticationManager
+		if(authManager.authenticate(userName, password)) {
+			// Then verify customer
+			if(customers.containsKey(userName)) {
+				return new CustomerID(userName);
+			}
 		}
 		return null;
 	}
