@@ -10,6 +10,7 @@ public class NewBank {
 	
 	private NewBank() {
 		customers = new HashMap<>();
+		authManager = new AuthenticationManager();
 		addTestData();
 	}
 	
@@ -55,7 +56,7 @@ public class NewBank {
 	// commands from the NewBank customer are processed in this method
 	public synchronized String processRequest(CustomerID customer, String request) {
 		if(customers.containsKey(customer.getKey())) {
-			String[] parts = request.split(" ", 2);
+			String[] parts = request.split(" ");
 			String command = parts[0];
 
 			switch(command) {
@@ -63,6 +64,17 @@ public class NewBank {
 			case "NEWACCOUNT" :
 				if(parts.length == 2) {
 					return newAccount(customer, parts[1]);
+				}
+				return "FAIL";
+			case "PAY" :
+				if(parts.length == 3) {
+					try {
+						String recipientName = parts[1];
+						double amount = Double.parseDouble(parts[2]);
+						return pay(customer, recipientName, amount);
+					} catch (NumberFormatException e) {
+						return "FAIL";
+					}
 				}
 				return "FAIL";
 			default : return "FAIL";
@@ -81,6 +93,39 @@ public class NewBank {
 			return "FAIL";
 		}
 		c.addAccount(new Account(accountName, 0.0));
+		return "SUCCESS";
+	}
+
+	private String pay(CustomerID customer, String recipientName, double amount) {
+		// Validate amount is positive
+		if(amount <= 0) {
+			return "FAIL";
+		}
+
+		// Get sender customer
+		Customer sender = customers.get(customer.getKey());
+		if(sender == null || !sender.hasAccounts()) {
+			return "FAIL";
+		}
+
+		// Get recipient customer
+		Customer recipient = customers.get(recipientName);
+		if(recipient == null || !recipient.hasAccounts()) {
+			return "FAIL";
+		}
+
+		// Get accounts
+		Account senderAccount = sender.getFirstAccount();
+		Account recipientAccount = recipient.getFirstAccount();
+
+		// Check sufficient funds and debit from sender
+		if(!senderAccount.debit(amount)) {
+			return "FAIL";
+		}
+
+		// Credit to recipient
+		recipientAccount.credit(amount);
+
 		return "SUCCESS";
 	}
 
