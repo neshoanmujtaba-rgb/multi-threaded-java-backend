@@ -1,3 +1,5 @@
+package newbank.server;
+
 import java.util.HashMap;
 import java.util.Scanner;
 
