@@ -33,4 +33,15 @@ public class Customer {
 		}
 		return false;
 	}
+
+	public boolean hasAccounts() {
+		return !accounts.isEmpty();
+	}
+
+	public Account getFirstAccount() {
+		if(accounts.isEmpty()) {
+			return null;
+		}
+		return accounts.get(0);
+	}
 }

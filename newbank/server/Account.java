@@ -18,4 +18,18 @@ public class Account {
 		return accountName;
 	}
 
+	public boolean debit(double amount) {
+		if(amount <= 0 || openingBalance < amount) {
+			return false;
+		}
+		openingBalance -= amount;
+		return true;
+	}
+
+	public void credit(double amount) {
+		if(amount > 0) {
+			openingBalance += amount;
+		}
+	}
+
 }

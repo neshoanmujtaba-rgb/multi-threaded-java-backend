@@ -11,13 +11,10 @@ public class AuthenticationManager {
     // it will only hold data of the NewBank user and their own PC. 
     // I initially thought it might   
     private HashMap<String, String> credentials;  // stores username-password pairs
-    private final String DATA_FILE = "user_credentials.dat"; //
-
-
-    public AuthenticationManager() {
-        //credentials = new HashMap<>(); // this is where the issue starts every new instance of authentication manager starts with a new Hashmap object instance.
-    credentials = loadFromFile(); // load existing data on startup
+    private final String DATA_FILE = "user_credentials.dat";
     
+    public AuthenticationManager() {
+        credentials = loadFromFile(); // load existing data on startup
     }
     
     // Register new user with username - password
@@ -34,7 +31,7 @@ public class AuthenticationManager {
         }
         return false;
     }
-
+    
     // SAVE data to file
     private void saveToFile() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))){
@@ -44,7 +41,7 @@ public class AuthenticationManager {
             System.err.println("Error saving user data: " + e.getMessage());
         }
     }
-
+    
     // LOAD data from file 
     private HashMap<String, String> loadFromFile(){
         File file = new File(DATA_FILE);
@@ -52,7 +49,6 @@ public class AuthenticationManager {
             System.out.println("No existing user credentials found. Starting fresh. "); 
             return new HashMap<>();
         }
-
         try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
             return (HashMap<String, String>) ois.readObject();
         } catch(IOException | ClassNotFoundException e) {
