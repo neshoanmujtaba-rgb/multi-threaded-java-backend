@@ -44,4 +44,17 @@ public class Customer {
 		}
 		return accounts.get(0);
 	}
+
+	public Account getAccount(String accountName) {
+		for (Account a : accounts) {
+			if (a.getAccountName().equals(accountName)){
+				return a;
+			}
+		}
+		return null;
+	}
+
+	public int getNumberOfAccounts() {
+		return accounts.size();
+	}
 }
