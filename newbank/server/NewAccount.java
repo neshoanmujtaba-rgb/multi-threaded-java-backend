@@ -70,19 +70,3 @@ public class NewAccount {
         return "SUCCESS: Account '" + accountName + "' created with balance £0.00";
     }
 }
-    /**
-     * FR1: The system shall provide a function to create new accounts.
-     * FR1.1: The user shall enter a command in the format NEWACCOUNT <AccountName>.
-     * FR1.2: The system shall create the account with a default balance of £0.00.
-     * FR1.3: The system shall return SUCCESS if the account is created,
-     *        or FAIL if an account with that name already exists.
-     */
-    public static String createAccount(String accountName) {
-        if (accounts.containsKey(accountName)) {
-            return "FAIL: Account with name '" + accountName + "' already exists.";
-        } else {
-            accounts.put(accountName, 0.00);
-            return "SUCCESS: Account '" + accountName + "' created with balance £0.00.";
-        }
-    }
-}
