@@ -30,11 +30,18 @@ public class NewBank {
 		customers.put("John", john);
 		authManager.registerUser("John", "abcd");
 
+		Customer ada = new Customer();
+		ada.addAccount(new Account("Checking", 1800.0));
+		ada.addAccount(new Account("Savings", 15.0));
+		customers.put("Ada", ada);
+		authManager.registerUser("Ada", "efgh");
+
 		// Print demo login when server connection starts
 		System.out.println("\n (<3 ========== DEMO LOGINS ==========");
 		System.out.println("Username: Bhagy      Password: 1234");
 		System.out.println("Username: Christina  Password: 5678");
 		System.out.println("Username: John       Password: abcd");
+		System.out.println("Username: Ada		Password: efgh");
 		System.out.println("==================================== :)\n");
 	}
 	
@@ -77,6 +84,18 @@ public class NewBank {
 					}
 				}
 				return "FAIL";
+			case "MOVE" :
+				if(parts.length == 4) {
+					try {
+						double amount = Double.parseDouble(parts[1]);
+						String fromAccount = parts[2];
+						String toAccount = parts[3];
+						return move(customer, amount, fromAccount, toAccount);
+					} catch (NumberFormatException e) {
+						return "FAIL";
+					}
+				}
+				return "FAIL";
 			default : return "FAIL";
 			}
 		}
@@ -85,6 +104,10 @@ public class NewBank {
 
 	private String showMyAccounts(CustomerID customer) {
 		return (customers.get(customer.getKey())).accountsToString();
+	}
+
+	private int getNumberOfAccounts(CustomerID customer){
+		return customers.get(customer.getKey()).getNumberOfAccounts();
 	}
 
 	private String newAccount(CustomerID customer, String accountName) {
@@ -127,6 +150,33 @@ public class NewBank {
 		recipientAccount.credit(amount);
 
 		return "SUCCESS";
+	}
+	
+	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
+		
+		Customer c = customers.get(customer.getKey());
+		Account from = c.getAccount(fromAccount);
+		Account to = c.getAccount(toAccount);
+		
+		// Validate amount is positive
+		if (amount <= 0) {
+			return "FAIL";
+		}
+
+		// Validate customer has more than one account
+		if (getNumberOfAccounts(customer) < 2) {
+			return "FAIL";
+		}
+
+		// Attempt to debit fromAccount
+		if(!from.debit(amount)) {
+			return "FAIL";
+		}
+
+		// Assuming none of the above have failed credit account
+		to.credit(amount);
+
+		return "SUCCESS"; 
 	}
 
 }
