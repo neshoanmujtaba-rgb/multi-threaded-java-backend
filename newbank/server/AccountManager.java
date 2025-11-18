@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AuthenticationManager {
+public class AccountManager {
     
     // NM:14/11/25: I think a temporary workaround to making credentials stick around between sessions
     // is to do the following...
@@ -13,7 +13,7 @@ public class AuthenticationManager {
     private HashMap<String, String> credentials;  // stores username-password pairs
     private final String DATA_FILE = "user_credentials.dat";
     
-    public AuthenticationManager() {
+    public AccountManager() {
         credentials = loadFromFile(); // load existing data on startup
     }
     
