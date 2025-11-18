@@ -2,6 +2,8 @@ package newbank.server;
 
 import java.util.HashMap;
 
+import newbank.server.Account.DebitOutcome;
+
 public class NewBank {
 	
 	private static final NewBank bank = new NewBank();
@@ -119,6 +121,36 @@ public class NewBank {
 		return "SUCCESS";
 	}
 
+	// Transfer method to be used by both Pay and Move methods
+	private DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
+		
+		DebitOutcome outcome = sourceAccount.debit(amount);
+
+		if (outcome == DebitOutcome.SUCCESS){
+			destinationAccount.credit(amount);
+		}
+		
+		return outcome;
+	}
+
+
+	private String transferOutcomeString(DebitOutcome outcome, double amount, Account source, Account destination) {
+		switch(outcome){
+			case SUCCESS:
+				return "SUCCESS: Transferred " + amount + " from " + source.getAccountName() + " to " + destination.getAccountName() + ". " + source.getAccountName() + "'s new balance is: " + source.getAccountBalance();
+			
+			case NON_POSITIVE_AMOUNT:
+				return "FAIL: Amount must be positive";
+
+			case INSUFFICIENT_FUNDS:
+				return "FAIL: Insufficient funds";
+			
+			default:
+				return "FAIL: Unknown error";
+
+		}
+	}
+
 	private String pay(CustomerID customer, String recipientName, double amount) {
 		// Validate amount is positive
 		if(amount <= 0) {
@@ -142,14 +174,10 @@ public class NewBank {
 		Account recipientAccount = recipient.getFirstAccount();
 
 		// Check sufficient funds and debit from sender
-		if(!senderAccount.debit(amount)) {
-			return "FAIL";
-		}
+		// UPDATE TO CALL COMMON METHOD
+		DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
 
-		// Credit to recipient
-		recipientAccount.credit(amount);
-
-		return "SUCCESS";
+		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount)
 	}
 	
 	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
@@ -187,12 +215,8 @@ public class NewBank {
 		}
 
 		// Attempt to debit fromAccount
-		if(!from.debit(amount)) {
-			return "FAIL";
-		}
-
-		// Assuming none of the above have failed credit account
-		to.credit(amount);
+		
+		
 
 		return "SUCCESS"; 
 	}
