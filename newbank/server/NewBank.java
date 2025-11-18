@@ -6,11 +6,11 @@ public class NewBank {
 
     private static final NewBank bank = new NewBank();
     private HashMap<String, Customer> customers;
-    private AuthenticationManager authManager;
+    private AccountManager authManager;
 
     private NewBank() {
         customers = new HashMap<>();
-        authManager = new AuthenticationManager();
+        authManager = new AccountManager();
         addTestData();
     }
 
