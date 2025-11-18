@@ -44,6 +44,7 @@ public class Customer {
         return accounts.get(0);
     }
 
+    // Case-insensitive version from your branch
     public Account getAccountByName(String accountName) {
         for (Account a : accounts) {
             if (a.getAccountName().equalsIgnoreCase(accountName)) {
@@ -51,5 +52,10 @@ public class Customer {
             }
         }
         return null;
+    }
+
+    // Extra method from main branch
+    public int getNumberOfAccounts() {
+        return accounts.size();
     }
 }
