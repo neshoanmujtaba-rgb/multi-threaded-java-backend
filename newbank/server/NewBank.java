@@ -154,18 +154,36 @@ public class NewBank {
 	
 	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
 		
+		// Validate customer exists
 		Customer c = customers.get(customer.getKey());
+		if (c == null) {
+			return "FAIL: You do not exist";
+		}
+
+		// Validate account names
+		if (fromAccount == null || toAccount == null) {
+			return "FAIL: To and From account names cannot be null";
+		}
+
+		// Retrieve and validate accounts
 		Account from = c.getAccount(fromAccount);
+		if (from == null) {
+			return "FAIL: fromAccount cannot be null";
+		}
+
 		Account to = c.getAccount(toAccount);
+		if (to == null) {
+			return "FAIL: toAccount cannot be null";
+		}
 		
 		// Validate amount is positive
 		if (amount <= 0) {
-			return "FAIL";
+			return "FAIL: Amount must be positive";
 		}
 
 		// Validate customer has more than one account
 		if (getNumberOfAccounts(customer) < 2) {
-			return "FAIL";
+			return "FAIL: You do not have more than one account";
 		}
 
 		// Attempt to debit fromAccount
