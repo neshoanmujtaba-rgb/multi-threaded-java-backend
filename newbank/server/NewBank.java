@@ -122,6 +122,7 @@ public class NewBank {
 	}
 
 	// Transfer method to be used by both Pay and Move methods
+	// You need to be determining the accounts in the Pay and Move methods before calling them here
 	private DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
 		
 		DebitOutcome outcome = sourceAccount.debit(amount);
@@ -152,73 +153,50 @@ public class NewBank {
 	}
 
 	private String pay(CustomerID customer, String recipientName, double amount) {
-		// Validate amount is positive
-		if(amount <= 0) {
-			return "FAIL";
-		}
 
 		// Get sender customer
 		Customer sender = customers.get(customer.getKey());
 		if(sender == null || !sender.hasAccounts()) {
-			return "FAIL";
+			return "FAIL: You do not have an account";
 		}
 
 		// Get recipient customer
 		Customer recipient = customers.get(recipientName);
 		if(recipient == null || !recipient.hasAccounts()) {
-			return "FAIL";
+			return "FAIL: Recipient does not have an account";
 		}
 
 		// Get accounts
 		Account senderAccount = sender.getFirstAccount();
 		Account recipientAccount = recipient.getFirstAccount();
 
-		// Check sufficient funds and debit from sender
-		// UPDATE TO CALL COMMON METHOD
+		// UPDATED TO CALL COMMON METHOD TRANSFER
 		DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
 
 		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
 	}
 	
 	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
-		
-		// Validate customer exists
 		Customer c = customers.get(customer.getKey());
-		if (c == null) {
-			return "FAIL: You do not exist";
-		}
+        Account from = c.getAccount(fromAccount);
+        Account to = c.getAccount(toAccount);
 
 		// Validate account names
 		if (fromAccount == null || toAccount == null) {
-			return "FAIL: To and From account names cannot be null";
+			return "FAIL: To and From account names must not be null";
 		}
 
-		// Retrieve and validate accounts
-		Account from = c.getAccount(fromAccount);
-		if (from == null) {
-			return "FAIL: fromAccount cannot be null";
-		}
-
-		Account to = c.getAccount(toAccount);
-		if (to == null) {
-			return "FAIL: toAccount cannot be null";
-		}
-		
-		// Validate amount is positive
-		if (amount <= 0) {
-			return "FAIL: Amount must be positive";
-		}
-
+		// MOVE SPECIFIC
 		// Validate customer has more than one account
 		if (getNumberOfAccounts(customer) < 2) {
 			return "FAIL: You do not have more than one account";
 		}
 
-		// Attempt to debit fromAccount
-		
+		// Attempt to debit fromAccount - CALL TRANSFER INSTEAD
+		DebitOutcome outcome = transfer(from, to, amount);
 		
 
-		return "SUCCESS"; 
+		return transferOutcomeString(outcome, amount, from, to);
 	}
 
 }
