@@ -177,7 +177,7 @@ public class NewBank {
 		// UPDATE TO CALL COMMON METHOD
 		DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
 
-		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount)
+		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
 	}
 	
 	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
