@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class NewAccount {
- // A HashMap to store account names and their balances
+    // A HashMap to store account names and their balances
     private static HashMap<String, Double> accounts = new HashMap<>();
 
     public static void main(String[] args) {
