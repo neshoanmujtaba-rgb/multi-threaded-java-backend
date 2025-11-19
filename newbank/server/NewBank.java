@@ -85,10 +85,10 @@ public class NewBank {
                             double amount = Double.parseDouble(parts[2]);
                             return pay(customer, recipientName, amount);
                         } catch (NumberFormatException e) {
-                            return "FAIL";
+                            return "FAIL: Amount must be a valid number";
                         }
                     }
-                    return "FAIL";
+                    return "FAIL: Insufficient arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
                 case "MOVE":
                     if (parts.length == 4) {
                         try {
@@ -97,10 +97,10 @@ public class NewBank {
                             String toAccount = parts[3];
                             return move(customer, amount, fromAccount, toAccount);
                         } catch (NumberFormatException e) {
-                            return "FAIL";
+                            return "FAIL: Amount must be a valid number";
                         }
                     }
-                    return "FAIL";
+                    return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
                 default:
                     return "FAIL: Unknown command";
             }
@@ -133,7 +133,7 @@ public class NewBank {
 	// Transfer method to be used by both Pay and Move methods
 	// You need to be determining the accounts in the Pay and Move methods before calling them here
 	private DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
-		
+
 		DebitOutcome outcome = sourceAccount.debit(amount);
 
 		if (outcome == DebitOutcome.SUCCESS){
@@ -186,8 +186,8 @@ public class NewBank {
 	
 	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
 		Customer c = customers.get(customer.getKey());
-        Account from = c.getAccount(fromAccount);
-        Account to = c.getAccount(toAccount);
+        Account from = c.getAccountByName(fromAccount);
+        Account to = c.getAccountByName(toAccount);
 
 		// Validate account names
 		if (fromAccount == null || toAccount == null) {
@@ -196,7 +196,7 @@ public class NewBank {
 
 		// MOVE SPECIFIC
 		// Validate customer has more than one account
-		if (getNumberOfAccounts(customer) < 2) {
+		if (c.getNumberOfAccounts() < 2) {
 			return "FAIL: You do not have more than one account";
 		}
 
