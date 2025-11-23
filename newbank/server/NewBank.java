@@ -64,19 +64,23 @@ public class NewBank {
             String command = parts[0];
 
             switch (command) {
+                
                 case "SHOWMYACCOUNTS":
                     return showMyAccounts(customer);
-                case "SHOWTRANSACTIONS":
+                
+                    case "SHOWTRANSACTIONS":
                     if (parts.length == 2) {
                         return showTransactions(customer, parts[1]);
                     }
                     return "FAIL: Missing account name";
-                case "NEWACCOUNT":
+                
+                    case "NEWACCOUNT":
                     if (parts.length == 2) {
                         return newAccount(customer, parts[1]);
                     }
                     return "FAIL";
-                case "PAY":
+                
+                    case "PAY":
                     if (parts.length == 3) {
                         try {
                             String recipientName = parts[1];
@@ -87,7 +91,8 @@ public class NewBank {
                         }
                     }
                     return "FAIL";
-                case "MOVE":
+                
+                    case "MOVE":
                     if (parts.length == 4) {
                         try {
                             double amount = Double.parseDouble(parts[1]);
@@ -99,6 +104,18 @@ public class NewBank {
                         }
                     }
                     return "FAIL";
+                
+                    case "CLOSEACCOUNT":
+                    if (parts.length == 1) {
+                        return "FAIL: Please specify an account name to close. e.g. CLOSEACCOUNT <AccountName>";
+                    }
+                    if (parts.length == 2) {
+                        Customer accountHolder = customers.get(customer.getKey());
+                        String accountName = parts[1];
+                        return accountHolder.removeAccount(accountName);
+                    }
+                        
+                        
                 default:
                     return "FAIL: Unknown command";
             }
@@ -119,6 +136,7 @@ public class NewBank {
         return String.join("\n", account.getTransactions());
     }
 
+    // NM 22/11/25: should be updated or integrated with NewAccount.java
     private String newAccount(CustomerID customer, String accountName) {
         Customer c = customers.get(customer.getKey());
         if (c.hasAccount(accountName)) {
