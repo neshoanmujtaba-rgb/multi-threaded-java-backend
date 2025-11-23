@@ -59,52 +59,30 @@ public class NewBank {
     }
 
     public synchronized String processRequest(CustomerID customer, String request) {
-        if (customers.containsKey(customer.getKey())) {
-            String[] parts = request.split(" ");
-            String command = parts[0];
+    String[] tokens = request.split(" ");
+    String command = tokens[0].toUpperCase();
 
-            switch (command) {
-                case "SHOWMYACCOUNTS":
-                    return showMyAccounts(customer);
-                case "SHOWTRANSACTIONS":
-                    if (parts.length == 2) {
-                        return showTransactions(customer, parts[1]);
-                    }
-                    return "FAIL: Missing account name";
-                case "NEWACCOUNT":
-                    if (parts.length == 2) {
-                        return newAccount(customer, parts[1]);
-                    }
-                    return "FAIL";
-                case "PAY":
-                    if (parts.length == 3) {
-                        try {
-                            String recipientName = parts[1];
-                            double amount = Double.parseDouble(parts[2]);
-                            return pay(customer, recipientName, amount);
-                        } catch (NumberFormatException e) {
-                            return "FAIL";
-                        }
-                    }
-                    return "FAIL";
-                case "MOVE":
-                    if (parts.length == 4) {
-                        try {
-                            double amount = Double.parseDouble(parts[1]);
-                            String fromAccount = parts[2];
-                            String toAccount = parts[3];
-                            return move(customer, amount, fromAccount, toAccount);
-                        } catch (NumberFormatException e) {
-                            return "FAIL";
-                        }
-                    }
-                    return "FAIL";
-                default:
-                    return "FAIL: Unknown command";
+    switch (command) {
+
+        case "SHOWMYACCOUNTS":
+            return showMyAccounts(customer);
+
+        case "NEWACCOUNT":
+            if (tokens.length < 2) {
+                return "FAIL: Missing account type";
             }
-        }
-        return "FAIL";
+            return newAccount(customer, tokens[1]);
+
+        case "HELP":
+            return getHelpText();
+
+        case "LOGOUT":
+            return "SUCCESS: Logged out";
+
+        default:
+            return "FAIL: Unknown command. Type HELP for a list of commands.";
     }
+}
 
     private String showMyAccounts(CustomerID customer) {
         return customers.get(customer.getKey()).accountsToString();
@@ -178,4 +156,12 @@ public class NewBank {
         to.credit(amount);
         return "SUCCESS";
     }
+    
+private String getHelpText() {
+    return "AVAILABLE COMMANDS:\n"
+         + "---------------------------------\n"
+         + "SHOWMYACCOUNTS     - View all your accounts\n"
+         + "NEWACCOUNT <TYPE>  - Create a new account of the given type\n"
+         + "HELP               - Show all available commands\n"
+         + "LOGOUT             - Log out of your session\n";
 }
