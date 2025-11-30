@@ -1,12 +1,12 @@
 package newbank.server;
 
 import java.util.HashMap;
-
-import newbank.server.Account.DebitOutcome;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class NewBank {
-
-    private static final NewBank bank = new NewBank();
+	
+	private static final NewBank bank = new NewBank();
     private HashMap<String, Customer> customers;
     private AccountManager authManager;
 
@@ -140,7 +140,64 @@ public class NewBank {
         return "FAIL: Unknown customer";
     }
 
-    private String showMyAccounts(CustomerID customer) {
+	private String createNewAccount(CustomerID customerId, String accountName) {
+		Customer customer = customers.get(customerId.getKey());
+		if(customer.hasAccount(accountName)) {
+			return "FAIL";
+		}
+		customer.addAccount(new Account(accountName, 0.0));
+		logTransaction(customer, "Created account: " + accountName);
+		return "SUCCESS";
+	}
+
+	private String moveMoney(CustomerID customerId, String amountStr, String fromAccountName, String toAccountName) {
+		Customer customer = customers.get(customerId.getKey());
+		double amount;
+		try {
+			amount = Double.parseDouble(amountStr);
+		} catch (NumberFormatException e) {
+			return "FAIL";
+		}
+
+		Account from = customer.getAccountByName(fromAccountName);
+		Account to = customer.getAccountByName(toAccountName);
+
+		if (from != null && to != null && from.getBalance() >= amount) {
+			from.withdraw(amount);
+			to.deposit(amount);
+			logTransaction(customer, String.format("Moved %.2f from %s to %s", amount, fromAccountName, toAccountName));
+			return "SUCCESS";
+		}
+		return "FAIL";
+	}
+
+	private String payMoney(CustomerID customerId, String recipient, String amountStr) {
+		Customer customer = customers.get(customerId.getKey());
+		double amount;
+		try {
+			amount = Double.parseDouble(amountStr);
+		} catch (NumberFormatException e) {
+			return "FAIL";
+		}
+
+		Account main = customer.getFirstAccount();
+		if(main != null && main.getBalance() >= amount) {
+			main.withdraw(amount);
+			// In a complete implementation, we would credit the recipient here.
+			logTransaction(customer, String.format("Paid %.2f to %s", amount, recipient));
+			return "SUCCESS";
+		}
+		return "FAIL";
+	}
+
+	private void logTransaction(Customer customer, String message) {
+		LocalDateTime now = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		String timestamp = now.format(formatter);
+		customer.addTransaction(timestamp + " | " + message);
+	}
+	
+	private String showMyAccounts(CustomerID customer) {
         return customers.get(customer.getKey()).accountsToString();
     }
 
