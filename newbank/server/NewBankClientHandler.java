@@ -37,14 +37,14 @@ public class NewBankClientHandler extends Thread{
 			}
 
 			// Login successful - ready to process commands
-			System.out.println("Log In Successful. What do you want to do?");
+			out.println("Log In Successful. What do you want to do?");
 			while(true) {
 				String request = in.readLine();
 				if (request == null) break;
 				
 				System.out.println("Request from " + customer.getKey());
-				String responce = bank.processRequest(customer, request);
-				System.out.println(responce);
+				String response = bank.processRequest(customer, request);
+				out.println(response);
 			}
 			
 		} catch (IOException e) {
