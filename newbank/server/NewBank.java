@@ -63,7 +63,7 @@ public class NewBank {
     public synchronized String processRequest(CustomerID customer, String request) {
         if (customers.containsKey(customer.getKey())) {
             String[] parts = request.split(" ");
-            String command = parts[0];
+            String command = parts[0].toUpperCase();
 
             switch (command) {
                 case "SHOWMYACCOUNTS":
