@@ -61,6 +61,18 @@ public class NewBankClientHandler extends Thread{
 		}
 	}
 
+	// Display available commands to the customer
+	private void showAvailableCommands() {
+		out.println("Available Commands:");
+		out.println("-------------------");
+		out.println("SHOWMYACCOUNTS - View all your accounts and balances");
+		out.println("NEWACCOUNT <Name> - Create a new account (e.g., NEWACCOUNT Savings)");
+		out.println("MOVE <Amount> <From> <To> - Transfer money between your accounts");
+		out.println("                             (e.g., MOVE 100 Main Savings)");
+		out.println("PAY <Person> <Amount> - Pay money to another user");
+		out.println("                        (e.g., PAY John 100)");
+	}
+
 		/** login attempt handler with lockout mechanism
 	  Returns CustomerID if successful */
 	private CustomerID attemptLogin() throws IOException {
