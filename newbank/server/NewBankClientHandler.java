@@ -7,62 +7,65 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class NewBankClientHandler extends Thread { 
-    private NewBank bank;
-    private BufferedReader in;
-    private PrintWriter out;
+public class NewBankClientHandler extends Thread{
+	
+	private NewBank bank;
+	private BufferedReader in;
+	private PrintWriter out;
 
-    // lockout tracking variables
-    private int failedAttempts = 0;
-    private static final int MAX_ATTEMPTS = 3;
-    private static final long LOCKOUT_TIME = 30 * 1000; // 30 seconds
+	// lockout tracking variables
+	private int failedAttempts = 0;
+	private static final int MAX_ATTEMPTS = 3;
+	private static final long LOCKOUT_TIME = 30 * 1000; // should be 30 x 1000ms = 30 seconds
+	
+	
+	public NewBankClientHandler(Socket s) throws IOException {
+		bank = NewBank.getBank();
+		in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+		out = new PrintWriter(s.getOutputStream(), true);
+	}
+	
+	public void run() {
+		// keep getting requests from the client and processing them
+		try {
 
-public NewBankClientHandler(Socket s) throws IOException {
-    bank = NewBank.getBank();
-    in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-    out = new PrintWriter(s.getOutputStream(), true);
-}
+			// session attempting login
+			CustomerID customer = attemptLogin();
+			
+			// If client disconnected during login, exit 
+			if (customer == null) {
+				return;
+			}
 
-public void run() {
-        try {
-            // session attempting login
-            CustomerID customer = attemptLogin();
-
-            // If client disconnected during login, exit
-            if (customer == null) {
-                return;
-            }
-
-            // Login successful - ready to process commands
-            System.out.println("Log In Successful. What do you want to do?");
-            while (true) {
-                String request = in.readLine();
-                if (request == null) break;
-
-                System.out.println("Request from " + customer.getKey());
-                String response = bank.processRequest(customer, request);
-                out.println(response); // Send response to client
-                System.out.println(response);
-
-                // ✅ If LOGOUT command was processed, end session
+			// Login successful - ready to process commands
+			out.println("Log In Successful. What do you want to do?");
+			while(true) {
+				String request = in.readLine();
+				if (request == null) break;
+				
+				System.out.println("Request from " + customer.getKey());
+				String response = bank.processRequest(customer, request);
+				out.println(response);
+			
                 if ("SUCCESS: Logged out".equals(response)) {
                     System.out.println("Closing connection for " + customer.getKey());
                     break;
                 }
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                in.close();
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				in.close();
+				out.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
 
     /** login attempt handler with lockout mechanism
      Returns CustomerID if successful */

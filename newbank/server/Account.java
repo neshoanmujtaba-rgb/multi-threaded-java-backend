@@ -24,13 +24,25 @@ public class Account {
         return accountName;
     }
 
-    public boolean debit(double amount) {
-        if (amount <= 0 || openingBalance < amount) {
-            return false;
+	public double getAccountBalance(){
+        return openingBalance;
+    }
+
+    public enum DebitOutcome {
+        NON_POSITIVE_AMOUNT,
+        INSUFFICIENT_FUNDS,
+        SUCCESS
+    }
+
+    public DebitOutcome debit(double amount) {
+        if(amount <= 0) {
+            return DebitOutcome.NON_POSITIVE_AMOUNT;
+        }
+        if (openingBalance < amount) {
+            return DebitOutcome.INSUFFICIENT_FUNDS;
         }
         openingBalance -= amount;
-        transactions.add("Debited £" + amount + ", New Balance: £" + openingBalance);
-        return true;
+        return DebitOutcome.SUCCESS;
     }
 
     public void credit(double amount) {
