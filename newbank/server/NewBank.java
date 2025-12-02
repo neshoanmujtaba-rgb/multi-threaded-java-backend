@@ -68,27 +68,40 @@ public class NewBank {
             switch (command) {
                 case "SHOWMYACCOUNTS":
                     return showMyAccounts(customer);
+
                 case "SHOWTRANSACTIONS":
-                    if (parts.length == 2) {
-                        return showTransactions(customer, parts[1]);
-                    }
-                    return "FAIL: Missing account name";
+                   if(parts.length < 2) {
+                    return "FAIL: Missing account name";}    
+                if (parts.length > 2) {
+                    return "FAIL: Too many arguments entered. SHOWTRANSACTIONS must be run as SHOWTRANSACTIONS <Account Name>";
+                }
+                    return showTransactions(customer, parts[1]);     
+
                 case "NEWACCOUNT":
-                    if (parts.length == 2) {
-                        return newAccount(customer, parts[1]);
+                    if (parts.length < 2) {
+                        return "FAIL: Missing account name";
+                    } 
+                    if (parts.length > 2) {
+                        return "FAIL: Too many arguments entered. NEWACCOUNT must be run as NEWACCOUNT <Account Type>";
                     }
-                    return "FAIL";
+                    return newAccount(customer, parts[1]);
+
                 case "PAY":
-                    if (parts.length == 3) {
-                        try {
-                            String recipientName = parts[1];
-                            double amount = Double.parseDouble(parts[2]);
-                            return pay(customer, recipientName, amount);
-                        } catch (NumberFormatException e) {
-                            return "FAIL: Amount must be a valid number";
-                        }
+                    if (parts.length < 3) {
+                        return "FAIL: Missing arguments. PAY must be run as PAY <Recipient Name> <Amount>";
                     }
-                    return "FAIL: Insufficient arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
+                    if (parts.length > 3) {
+                        return "FAIL: Too many arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
+                    }
+
+                    try {
+                        String recipientName = parts[1];
+                        double amount = Double.parseDouble(parts[2]);
+                        return pay(customer, recipientName, amount);
+                    } catch (NumberFormatException e) {
+                        return "FAIL: Amount must be a valid number";
+                    }
+                
                 case "MOVE":
                     if (parts.length == 4) {
                         try {
@@ -101,11 +114,19 @@ public class NewBank {
                         }
                     }
                     return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
-                default:
-                    return "FAIL: Unknown command";
+                
+                case "LOGOUT":
+                return "SUCCESS: Logged out";
+                
+                case "HELP":
+                return getHelpText();
+                
+              default:
+                    return "FAIL: Unknown command. Type HELP for a list of commands.";
             }
         }
-        return "FAIL";
+
+        return "FAIL: Unknown customer";
     }
 
     private String showMyAccounts(CustomerID customer) {
@@ -207,4 +228,15 @@ public class NewBank {
 		return transferOutcomeString(outcome, amount, from, to);
 	}
 
-}
+    
+    private String getHelpText() {
+        return "AVAILABLE COMMANDS:\n"
+        + "---------------------------------\n"
+        + "SHOWMYACCOUNTS                          - View all your accounts\n"
+        + "SHOWTRANSACTIONS <Account>               - View transactions for an account\n"
+        + "NEWACCOUNT <AccountName>                 - Create a new account\n"
+        + "PAY <RecipientName> <Amount>             - Send money to another customer\n"
+        + "MOVE <Amount> <FromAccount> <ToAccount>  - Move money between your accounts\n"
+        + "LOGOUT                                   - Log out of your session\n"
+        + "HELP                                     - Show all available commands\n";
+    }
