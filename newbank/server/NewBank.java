@@ -2,6 +2,8 @@ package newbank.server;
 
 import java.util.HashMap;
 
+import newbank.server.Account.DebitOutcome;
+
 public class NewBank {
 
     private static final NewBank bank = new NewBank();
@@ -87,12 +89,11 @@ public class NewBank {
                             double amount = Double.parseDouble(parts[2]);
                             return pay(customer, recipientName, amount);
                         } catch (NumberFormatException e) {
-                            return "FAIL";
+                            return "FAIL: Amount must be a valid number";
                         }
                     }
-                    return "FAIL";
-                
-                    case "MOVE":
+                    return "FAIL: Insufficient arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
+                case "MOVE":
                     if (parts.length == 4) {
                         try {
                             double amount = Double.parseDouble(parts[1]);
@@ -100,10 +101,10 @@ public class NewBank {
                             String toAccount = parts[3];
                             return move(customer, amount, fromAccount, toAccount);
                         } catch (NumberFormatException e) {
-                            return "FAIL";
+                            return "FAIL: Amount must be a valid number";
                         }
                     }
-                    return "FAIL";
+                    return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
                 
                     case "CLOSEACCOUNT":
                     if (parts.length == 1) {
@@ -136,64 +137,90 @@ public class NewBank {
         return String.join("\n", account.getTransactions());
     }
 
-    // NM 22/11/25: should be updated or integrated with NewAccount.java
-    private String newAccount(CustomerID customer, String accountName) {
-        Customer c = customers.get(customer.getKey());
-        if (c.hasAccount(accountName)) {
-            return "FAIL";
-        }
-        c.addAccount(new Account(accountName, 0.0));
-        return "SUCCESS";
-    }
+	private String newAccount(CustomerID customer, String accountName) {
+		Customer c = customers.get(customer.getKey());
+		if(c.hasAccount(accountName)) {
+			return "FAIL";
+		}
+		c.addAccount(new Account(accountName, 0.0));
+		return "SUCCESS";
+	}
 
-    private String pay(CustomerID customer, String recipientName, double amount) {
-        if (amount <= 0) {
-            return "FAIL";
-        }
+	// Transfer method to be used by both Pay and Move methods
+	// You need to be determining the accounts in the Pay and Move methods before calling them here
+	private DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
 
-        Customer sender = customers.get(customer.getKey());
-        if (sender == null || !sender.hasAccounts()) {
-            return "FAIL";
-        }
+		DebitOutcome outcome = sourceAccount.debit(amount);
 
-        Customer recipient = customers.get(recipientName);
-        if (recipient == null || !recipient.hasAccounts()) {
-            return "FAIL";
-        }
+		if (outcome == DebitOutcome.SUCCESS){
+			destinationAccount.credit(amount);
+		}
+		
+		return outcome;
+	}
+
+
+	private String transferOutcomeString(DebitOutcome outcome, double amount, Account source, Account destination) {
+		switch(outcome){
+			case SUCCESS:
+				return "SUCCESS: Transferred " + amount + " from " + source.getAccountName() + " to " + destination.getAccountName() + ". " + source.getAccountName() + "'s new balance is: " + source.getAccountBalance();
+			
+			case NON_POSITIVE_AMOUNT:
+				return "FAIL: Amount must be positive";
+
+			case INSUFFICIENT_FUNDS:
+				return "FAIL: Insufficient funds";
+			
+			default:
+				return "FAIL: Unknown error";
+
+		}
+	}
+
+	private String pay(CustomerID customer, String recipientName, double amount) {
+
+		// Get sender customer
+		Customer sender = customers.get(customer.getKey());
+		if(sender == null || !sender.hasAccounts()) {
+			return "FAIL: You do not have an account";
+		}
+
+		// Get recipient customer
+		Customer recipient = customers.get(recipientName);
+		if(recipient == null || !recipient.hasAccounts()) {
+			return "FAIL: Recipient does not have an account";
+		}
 
         Account senderAccount = sender.getFirstAccount();
         Account recipientAccount = recipient.getFirstAccount();
 
-        if (!senderAccount.debit(amount)) {
-            return "FAIL";
-        }
+		// UPDATED TO CALL COMMON METHOD TRANSFER
+		DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
 
-        recipientAccount.credit(amount);
-        return "SUCCESS";
-    }
-
-    private int getNumberOfAccounts(CustomerID customer) {
-        return customers.get(customer.getKey()).getNumberOfAccounts();
-    }
-
-    private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
-        Customer c = customers.get(customer.getKey());
+		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
+	}
+	
+	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
+		Customer c = customers.get(customer.getKey());
         Account from = c.getAccountByName(fromAccount);
         Account to = c.getAccountByName(toAccount);
 
-        if (amount <= 0) {
-            return "FAIL";
-        }
+		// Validate account names
+		if (fromAccount == null || toAccount == null) {
+			return "FAIL: To and From account names must not be null";
+		}
 
-        if (getNumberOfAccounts(customer) < 2) {
-            return "FAIL";
-        }
+		// MOVE SPECIFIC
+		// Validate customer has more than one account
+		if (c.getNumberOfAccounts() < 2) {
+			return "FAIL: You do not have more than one account";
+		}
 
-        if (!from.debit(amount)) {
-            return "FAIL";
-        }
+		// Attempt to debit fromAccount - CALL TRANSFER INSTEAD
+		DebitOutcome outcome = transfer(from, to, amount);
+		
 
-        to.credit(amount);
-        return "SUCCESS";
-    }
+		return transferOutcomeString(outcome, amount, from, to);
+	}
+
 }

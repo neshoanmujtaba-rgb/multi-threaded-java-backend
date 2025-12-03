@@ -11,6 +11,7 @@ First, compile and run the server:
 ```bash
 cd newbank/server
 javac *.java
+cd ../..
 java newbank.server.NewBankServer
 ```
 
@@ -23,6 +24,7 @@ In a separate terminal, compile and run the client:
 ```bash
 cd newbank/client
 javac *.java
+cd ../..
 java newbank.client.ExampleClient
 ```
 
