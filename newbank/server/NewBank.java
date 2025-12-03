@@ -66,6 +66,7 @@ public class NewBank {
             String command = parts[0].toUpperCase();
 
             switch (command) {
+                
                 case "SHOWMYACCOUNTS":
                     return showMyAccounts(customer);
 
@@ -115,6 +116,16 @@ public class NewBank {
                     }
                     return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
                 
+                case "CLOSEACCOUNT":
+                    if (parts.length == 1) {
+                        return "FAIL: Please specify an account name to close. e.g. CLOSEACCOUNT <AccountName>";
+                    }
+                    if (parts.length == 2) {
+                        Customer accountHolder = customers.get(customer.getKey());
+                        String accountName = parts[1];
+                        return accountHolder.removeAccount(accountName);
+                    }
+                        
                 case "LOGOUT":
                 return "SUCCESS: Logged out";
                 

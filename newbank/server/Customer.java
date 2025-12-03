@@ -24,6 +24,25 @@ public class Customer {
         accounts.add(account);
     }
 
+    // FR8 Close Account Functionality
+    // Removes an account belonging to this Customer if it exists and balance is zero.
+    public String removeAccount(String accountName) {
+        Account accountInstance = getAccountByName(accountName);
+
+        if (accountInstance == null) {
+            return "FAIL: Account does not exist or belongs to another customer";
+        }
+
+        if (accountInstance.getBalance() != 0.00) {
+            return "FAIL: Account balance must be £0.00 to close account";
+        }
+
+        accounts.remove(accountInstance);
+        return "SUCCESS: Account closed successfully";
+    }
+
+
+    // NM 22/11/25: is this a duplicate of getAccountByName below?   
     public boolean hasAccount(String accountName) {
         for (Account a : accounts) {
             if (a.getAccountName().equalsIgnoreCase(accountName)) {
