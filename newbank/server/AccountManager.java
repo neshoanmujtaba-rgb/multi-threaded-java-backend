@@ -13,7 +13,6 @@ public class AccountManager {
     // NM:14/11/25: I think a temporary workaround to making credentials stick around between sessions
     // is to do the following...
     // it will only hold data of the NewBank user and their own PC. 
-    // I initially thought it might   
     private HashMap<String, String> credentials;  // stores username-password pairs
     private final String DATA_FILE = "user_credentials.dat";
     

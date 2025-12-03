@@ -52,6 +52,10 @@ public class Account {
         }
     }
 
+    public double getBalance() {
+        return openingBalance;
+    }
+
     public List<String> getTransactions() {
         return transactions;
     }

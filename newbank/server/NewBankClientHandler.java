@@ -1,3 +1,4 @@
+
 package newbank.server;
 
 import java.io.BufferedReader;
@@ -28,12 +29,25 @@ public class NewBankClientHandler extends Thread{
 		// keep getting requests from the client and processing them
 		try {
 
-			// session attempting login
-			CustomerID customer = attemptLogin();
-			
-			// If client disconnected during login, exit 
-			if (customer == null) {
-				return;
+			// ask for user name
+			out.println("Enter Username");
+			String userName = in.readLine();
+			// ask for password
+			out.println("Enter Password");
+			String password = in.readLine();
+			out.println("Checking Details...");
+			// authenticate user and get customer ID token from bank for use in subsequent requests
+			CustomerID customer = bank.checkLogInDetails(userName, password);
+			// if the user is authenticated then get requests from the user and process them 
+			if(customer != null) {
+				out.println("Log In Successful. What do you want to do?");
+				while(true) {
+					String request = in.readLine();
+					System.out.println("Request from " + customer.getKey());
+					String response = bank.processRequest(customer, request);
+					out.println(response);
+				}
+        
 			}
 
 			// Login successful - ready to process commands
@@ -45,7 +59,12 @@ public class NewBankClientHandler extends Thread{
 				System.out.println("Request from " + customer.getKey());
 				String response = bank.processRequest(customer, request);
 				out.println(response);
-			}
+			
+                if ("SUCCESS: Logged out".equals(response)) {
+                    System.out.println("Closing connection for " + customer.getKey());
+                    break;
+                }
+            }
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -125,23 +144,3 @@ public class NewBankClientHandler extends Thread{
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
