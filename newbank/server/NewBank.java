@@ -5,14 +5,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class NewBank {
-	
-	private static final NewBank bank = new NewBank();
+    
+    private static final NewBank bank = new NewBank();
     private HashMap<String, Customer> customers;
     private AccountManager authManager;
+    private TransactionLog transactionLog;
 
     private NewBank() {
         customers = new HashMap<>();
         authManager = new AccountManager();
+        transactionLog = new TransactionLog();
         addTestData();
     }
 
@@ -123,7 +125,11 @@ public class NewBank {
                     if (parts.length == 2) {
                         Customer accountHolder = customers.get(customer.getKey());
                         String accountName = parts[1];
-                        return accountHolder.removeAccount(accountName);
+                        String result = accountHolder.removeAccount(accountName);
+                        if (result.startsWith("SUCCESS")) {
+                            logTransaction(accountHolder, customer.getKey(), "Closed account: " + accountName);
+                        }
+                        return result;
                     }
                         
                 case "LOGOUT":
@@ -140,64 +146,66 @@ public class NewBank {
         return "FAIL: Unknown customer";
     }
 
-	private String createNewAccount(CustomerID customerId, String accountName) {
-		Customer customer = customers.get(customerId.getKey());
-		if(customer.hasAccount(accountName)) {
-			return "FAIL";
-		}
-		customer.addAccount(new Account(accountName, 0.0));
-		logTransaction(customer, "Created account: " + accountName);
-		return "SUCCESS";
-	}
+    private String createNewAccount(CustomerID customerId, String accountName) {
+        Customer customer = customers.get(customerId.getKey());
+        if(customer.hasAccount(accountName)) {
+            return "FAIL";
+        }
+        customer.addAccount(new Account(accountName, 0.0));
+        logTransaction(customer, customerId.getKey(), "Created account: " + accountName);
+        return "SUCCESS";
+    }
 
-	private String moveMoney(CustomerID customerId, String amountStr, String fromAccountName, String toAccountName) {
-		Customer customer = customers.get(customerId.getKey());
-		double amount;
-		try {
-			amount = Double.parseDouble(amountStr);
-		} catch (NumberFormatException e) {
-			return "FAIL";
-		}
+    private String moveMoney(CustomerID customerId, String amountStr, String fromAccountName, String toAccountName) {
+        Customer customer = customers.get(customerId.getKey());
+        double amount;
+        try {
+            amount = Double.parseDouble(amountStr);
+        } catch (NumberFormatException e) {
+            return "FAIL";
+        }
 
-		Account from = customer.getAccountByName(fromAccountName);
-		Account to = customer.getAccountByName(toAccountName);
+        Account from = customer.getAccountByName(fromAccountName);
+        Account to = customer.getAccountByName(toAccountName);
 
-		if (from != null && to != null && from.getBalance() >= amount) {
-			from.withdraw(amount);
-			to.deposit(amount);
-			logTransaction(customer, String.format("Moved %.2f from %s to %s", amount, fromAccountName, toAccountName));
-			return "SUCCESS";
-		}
-		return "FAIL";
-	}
+        if (from != null && to != null && from.getBalance() >= amount) {
+            from.withdraw(amount);
+            to.deposit(amount);
+            logTransaction(customer, customerId.getKey(), String.format("Moved %.2f from %s to %s", amount, fromAccountName, toAccountName));
+            return "SUCCESS";
+        }
+        return "FAIL";
+    }
 
-	private String payMoney(CustomerID customerId, String recipient, String amountStr) {
-		Customer customer = customers.get(customerId.getKey());
-		double amount;
-		try {
-			amount = Double.parseDouble(amountStr);
-		} catch (NumberFormatException e) {
-			return "FAIL";
-		}
+    private String payMoney(CustomerID customerId, String recipient, String amountStr) {
+        Customer customer = customers.get(customerId.getKey());
+        double amount;
+        try {
+            amount = Double.parseDouble(amountStr);
+        } catch (NumberFormatException e) {
+            return "FAIL";
+        }
 
-		Account main = customer.getFirstAccount();
-		if(main != null && main.getBalance() >= amount) {
-			main.withdraw(amount);
-			// In a complete implementation, we would credit the recipient here.
-			logTransaction(customer, String.format("Paid %.2f to %s", amount, recipient));
-			return "SUCCESS";
-		}
-		return "FAIL";
-	}
+        Account main = customer.getFirstAccount();
+        if(main != null && main.getBalance() >= amount) {
+            main.withdraw(amount);
+            // In a complete implementation, we would credit the recipient here.
+            logTransaction(customer, customerId.getKey(), String.format("Paid %.2f to %s", amount, recipient));
+            return "SUCCESS";
+        }
+        return "FAIL";
+    }
 
-	private void logTransaction(Customer customer, String message) {
-		LocalDateTime now = LocalDateTime.now();
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-		String timestamp = now.format(formatter);
-		customer.addTransaction(timestamp + " | " + message);
-	}
-	
-	private String showMyAccounts(CustomerID customer) {
+    private void logTransaction(Customer customer, String customerName, String message) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String timestamp = now.format(formatter);
+        String fullTransaction = timestamp + " | " + message;
+        customer.addTransaction(fullTransaction);
+        transactionLog.saveTransactions(customerName, customer.getTransactionHistoryList());
+    }
+    
+    private String showMyAccounts(CustomerID customer) {
         return customers.get(customer.getKey()).accountsToString();
     }
 
@@ -210,91 +218,105 @@ public class NewBank {
         return String.join("\n", account.getTransactions());
     }
 
-	private String newAccount(CustomerID customer, String accountName) {
-		Customer c = customers.get(customer.getKey());
-		if(c.hasAccount(accountName)) {
-			return "FAIL";
-		}
-		c.addAccount(new Account(accountName, 0.0));
-		return "SUCCESS";
-	}
+    private String newAccount(CustomerID customer, String accountName) {
+        Customer c = customers.get(customer.getKey());
+        if(c.hasAccount(accountName)) {
+            return "FAIL";
+        }
+        c.addAccount(new Account(accountName, 0.0));
+        logTransaction(c, customer.getKey(), "Created account: " + accountName);
+        return "SUCCESS";
+    }
 
-	// Transfer method to be used by both Pay and Move methods
-	// You need to be determining the accounts in the Pay and Move methods before calling them here
-	private DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
+    // Transfer method to be used by both Pay and Move methods
+    // You need to be determining the accounts in the Pay and Move methods before calling them here
+    private Account.DebitOutcome transfer(Account sourceAccount, Account destinationAccount, double amount) {
 
-		DebitOutcome outcome = sourceAccount.debit(amount);
+        Account.DebitOutcome outcome = sourceAccount.debit(amount);
 
-		if (outcome == DebitOutcome.SUCCESS){
-			destinationAccount.credit(amount);
-		}
-		
-		return outcome;
-	}
+        if (outcome == Account.DebitOutcome.SUCCESS){
+            destinationAccount.credit(amount);
+        }
+        
+        return outcome;
+    }
 
 
-	private String transferOutcomeString(DebitOutcome outcome, double amount, Account source, Account destination) {
-		switch(outcome){
-			case SUCCESS:
-				return "SUCCESS: Transferred " + amount + " from " + source.getAccountName() + " to " + destination.getAccountName() + ". " + source.getAccountName() + "'s new balance is: " + source.getAccountBalance();
-			
-			case NON_POSITIVE_AMOUNT:
-				return "FAIL: Amount must be positive";
+    private String transferOutcomeString(Account.DebitOutcome outcome, double amount, Account source, Account destination) {
+        switch(outcome){
+            case SUCCESS:
+                return "SUCCESS: Transferred " + amount + " from " + source.getAccountName() + " to " + destination.getAccountName() + ". " + source.getAccountName() + "'s new balance is: " + source.getAccountBalance();
+            
+            case NON_POSITIVE_AMOUNT:
+                return "FAIL: Amount must be positive";
 
-			case INSUFFICIENT_FUNDS:
-				return "FAIL: Insufficient funds";
-			
-			default:
-				return "FAIL: Unknown error";
+            case INSUFFICIENT_FUNDS:
+                return "FAIL: Insufficient funds";
+            
+            default:
+                return "FAIL: Unknown error";
 
-		}
-	}
+        }
+    }
 
-	private String pay(CustomerID customer, String recipientName, double amount) {
+    private String pay(CustomerID customer, String recipientName, double amount) {
 
-		// Get sender customer
-		Customer sender = customers.get(customer.getKey());
-		if(sender == null || !sender.hasAccounts()) {
-			return "FAIL: You do not have an account";
-		}
+        // Get sender customer
+        Customer sender = customers.get(customer.getKey());
+        if(sender == null || !sender.hasAccounts()) {
+            return "FAIL: You do not have an account";
+        }
 
-		// Get recipient customer
-		Customer recipient = customers.get(recipientName);
-		if(recipient == null || !recipient.hasAccounts()) {
-			return "FAIL: Recipient does not have an account";
-		}
+        // Get recipient customer
+        Customer recipient = customers.get(recipientName);
+        if(recipient == null || !recipient.hasAccounts()) {
+            return "FAIL: Recipient does not have an account";
+        }
 
         Account senderAccount = sender.getFirstAccount();
         Account recipientAccount = recipient.getFirstAccount();
 
-		// UPDATED TO CALL COMMON METHOD TRANSFER
-		DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
+        // UPDATED TO CALL COMMON METHOD TRANSFER
+        Account.DebitOutcome outcome = transfer(senderAccount, recipientAccount, amount);
 
-		return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
-	}
-	
-	private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
-		Customer c = customers.get(customer.getKey());
+        // Log transaction for both parties
+        if (outcome == Account.DebitOutcome.SUCCESS) {
+            logTransaction(sender, customer.getKey(), 
+                String.format("Paid £%.2f to %s", amount, recipientName));
+            logTransaction(recipient, recipientName, 
+                String.format("Received £%.2f from %s", amount, customer.getKey()));
+        }
+
+        return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
+    }
+    
+    private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
+        Customer c = customers.get(customer.getKey());
         Account from = c.getAccountByName(fromAccount);
         Account to = c.getAccountByName(toAccount);
 
-		// Validate account names
-		if (fromAccount == null || toAccount == null) {
-			return "FAIL: To and From account names must not be null";
-		}
+        // Validate account names
+        if (fromAccount == null || toAccount == null) {
+            return "FAIL: To and From account names must not be null";
+        }
 
-		// MOVE SPECIFIC
-		// Validate customer has more than one account
-		if (c.getNumberOfAccounts() < 2) {
-			return "FAIL: You do not have more than one account";
-		}
+        // MOVE SPECIFIC
+        // Validate customer has more than one account
+        if (c.getNumberOfAccounts() < 2) {
+            return "FAIL: You do not have more than one account";
+        }
 
-		// Attempt to debit fromAccount - CALL TRANSFER INSTEAD
-		DebitOutcome outcome = transfer(from, to, amount);
-		
+        // Attempt to debit fromAccount - CALL TRANSFER INSTEAD
+        Account.DebitOutcome outcome = transfer(from, to, amount);
+        
+        // Log transaction if successful
+        if (outcome == Account.DebitOutcome.SUCCESS) {
+            logTransaction(c, customer.getKey(), 
+                String.format("Moved £%.2f from %s to %s", amount, fromAccount, toAccount));
+        }
 
-		return transferOutcomeString(outcome, amount, from, to);
-	}
+        return transferOutcomeString(outcome, amount, from, to);
+    }
 
     
     private String getHelpText() {
@@ -308,3 +330,4 @@ public class NewBank {
         + "LOGOUT                                   - Log out of your session\n"
         + "HELP                                     - Show all available commands\n";
     }
+}

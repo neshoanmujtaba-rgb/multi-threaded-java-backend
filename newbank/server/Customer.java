@@ -92,4 +92,8 @@ public class Customer {
         return s;
     }
 
+    public java.util.List<String> getTransactionHistoryList() {
+        return new java.util.ArrayList<>(transactionHistory);
+    }
+
 }

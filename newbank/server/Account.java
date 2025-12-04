@@ -2,17 +2,22 @@ package newbank.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Account {
     private String accountName;
     private double openingBalance;
     private List<String> transactions;
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = 
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public Account(String accountName, double openingBalance) {
         this.accountName = accountName;
         this.openingBalance = openingBalance;
         this.transactions = new ArrayList<>();
-        transactions.add("Account created with balance: £" + openingBalance);
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+        transactions.add(timestamp + " | Account created with balance: £" + openingBalance);
     }
 
     @Override
@@ -24,7 +29,7 @@ public class Account {
         return accountName;
     }
 
-	public double getAccountBalance(){
+    public double getAccountBalance(){
         return openingBalance;
     }
 
@@ -42,13 +47,33 @@ public class Account {
             return DebitOutcome.INSUFFICIENT_FUNDS;
         }
         openingBalance -= amount;
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+        transactions.add(timestamp + " | Debited £" + amount + ", New Balance: £" + openingBalance);
         return DebitOutcome.SUCCESS;
     }
 
     public void credit(double amount) {
         if (amount > 0) {
             openingBalance += amount;
-            transactions.add("Credited £" + amount + ", New Balance: £" + openingBalance);
+            String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+            transactions.add(timestamp + " | Credited £" + amount + ", New Balance: £" + openingBalance);
+        }
+    }
+
+    // FR10.1: New methods for explicit transfer operations with timestamps
+    public void withdraw(double amount) {
+        if (amount > 0 && openingBalance >= amount) {
+            openingBalance -= amount;
+            String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+            transactions.add(timestamp + " | Withdrawn £" + amount + ", New Balance: £" + openingBalance);
+        }
+    }
+
+    public void deposit(double amount) {
+        if (amount > 0) {
+            openingBalance += amount;
+            String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
+            transactions.add(timestamp + " | Deposited £" + amount + ", New Balance: £" + openingBalance);
         }
     }
 
