@@ -4,9 +4,11 @@ import java.util.ArrayList;
 
 public class Customer {
     private ArrayList<Account> accounts;
+    private ArrayList<String> transactionHistory;
 
     public Customer() {
         accounts = new ArrayList<>();
+        transactionHistory = new ArrayList<>();
     }
 
     public String accountsToString() {
@@ -43,6 +45,10 @@ public class Customer {
 
 
     // NM 22/11/25: is this a duplicate of getAccountByName below?   
+    public void addTransaction(String transaction) {
+        transactionHistory.add(transaction);
+    }
+
     public boolean hasAccount(String accountName) {
         for (Account a : accounts) {
             if (a.getAccountName().equalsIgnoreCase(accountName)) {
@@ -77,4 +83,17 @@ public class Customer {
     public int getNumberOfAccounts() {
         return accounts.size();
     }
+
+    public String getTransactionHistory() {
+        String s = "Transaction History:\n";
+        for(String t : transactionHistory) {
+            s += t + "\n";
+        }
+        return s;
+    }
+
+    public java.util.List<String> getTransactionHistoryList() {
+        return new java.util.ArrayList<>(transactionHistory);
+    }
+
 }
