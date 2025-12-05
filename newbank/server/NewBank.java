@@ -73,28 +73,20 @@ public class NewBank {
                     return showMyAccounts(customer);
 
                 case "SHOWTRANSACTIONS":
-                   if(parts.length < 2) {
-                    return "FAIL: Missing account name";}
-                if (parts.length > 2) {
-                    return "FAIL: Too many arguments entered. SHOWTRANSACTIONS must be run as SHOWTRANSACTIONS <Account Name>";
-                }
+                    if(parts.length != 2) {
+                        return "FAIL: Invalid command format";
+                    }
                     return showTransactions(customer, parts[1]);
 
                 case "NEWACCOUNT":
-                    if (parts.length < 2) {
-                        return "FAIL: Missing account name";
-                    }
-                    if (parts.length > 2) {
-                        return "FAIL: Too many arguments entered. NEWACCOUNT must be run as NEWACCOUNT <Account Type>";
+                    if (parts.length != 2) {
+                        return "FAIL: Invalid command format";
                     }
                     return newAccount(customer, parts[1]);
 
                 case "PAY":
-                    if (parts.length < 3) {
-                        return "FAIL: Missing arguments. PAY must be run as PAY <Recipient Name> <Amount>";
-                    }
-                    if (parts.length > 3) {
-                        return "FAIL: Too many arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
+                    if (parts.length != 3) {
+                        return "FAIL: Invalid command format";
                     }
 
                     try {
@@ -102,35 +94,33 @@ public class NewBank {
                         double amount = Double.parseDouble(parts[2]);
                         return pay(customer, recipientName, amount);
                     } catch (NumberFormatException e) {
-                        return "FAIL: Amount must be a valid number";
+                        return "FAIL: Invalid command format";
                     }
 
                 case "MOVE":
-                    if (parts.length == 4) {
-                        try {
-                            double amount = Double.parseDouble(parts[1]);
-                            String fromAccount = parts[2];
-                            String toAccount = parts[3];
-                            return move(customer, amount, fromAccount, toAccount);
-                        } catch (NumberFormatException e) {
-                            return "FAIL: Amount must be a valid number";
-                        }
+                    if (parts.length != 4) {
+                        return "FAIL: Invalid command format";
                     }
-                    return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
+                    try {
+                        double amount = Double.parseDouble(parts[1]);
+                        String fromAccount = parts[2];
+                        String toAccount = parts[3];
+                        return move(customer, amount, fromAccount, toAccount);
+                    } catch (NumberFormatException e) {
+                        return "FAIL: Invalid command format";
+                    }
 
                 case "CLOSEACCOUNT":
-                    if (parts.length == 1) {
-                        return "FAIL: Please specify an account name to close. e.g. CLOSEACCOUNT <AccountName>";
+                    if (parts.length != 2) {
+                        return "FAIL: Invalid command format";
                     }
-                    if (parts.length == 2) {
-                        Customer accountHolder = customers.get(customer.getKey());
-                        String accountName = parts[1];
-                        String result = accountHolder.removeAccount(accountName);
-                        if (result.startsWith("SUCCESS")) {
-                            logTransaction(accountHolder, customer.getKey(), "Closed account: " + accountName);
-                        }
-                        return result;
+                    Customer accountHolder = customers.get(customer.getKey());
+                    String accountName = parts[1];
+                    String result = accountHolder.removeAccount(accountName);
+                    if (result.startsWith("SUCCESS")) {
+                        logTransaction(accountHolder, customer.getKey(), "Closed account: " + accountName);
                     }
+                    return result;
 
                 case "LOGOUT":
                 return "SUCCESS: Logged out";
@@ -139,7 +129,7 @@ public class NewBank {
                 return getHelpText();
 
               default:
-                    return "FAIL: Unknown command. Type HELP for a list of commands.";
+                    return "FAIL: Invalid command format";
             }
         }
 
