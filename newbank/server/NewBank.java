@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class NewBank {
-    
+
     private static final NewBank bank = new NewBank();
     private HashMap<String, Customer> customers;
     private AccountManager authManager;
@@ -68,33 +68,25 @@ public class NewBank {
             String command = parts[0].toUpperCase();
 
             switch (command) {
-                
+
                 case "SHOWMYACCOUNTS":
                     return showMyAccounts(customer);
 
                 case "SHOWTRANSACTIONS":
-                   if(parts.length < 2) {
-                    return "FAIL: Missing account name";}    
-                if (parts.length > 2) {
-                    return "FAIL: Too many arguments entered. SHOWTRANSACTIONS must be run as SHOWTRANSACTIONS <Account Name>";
-                }
-                    return showTransactions(customer, parts[1]);     
+                    if(parts.length != 2) {
+                        return "FAIL: Invalid command format";
+                    }
+                    return showTransactions(customer, parts[1]);
 
                 case "NEWACCOUNT":
-                    if (parts.length < 2) {
-                        return "FAIL: Missing account name";
-                    } 
-                    if (parts.length > 2) {
-                        return "FAIL: Too many arguments entered. NEWACCOUNT must be run as NEWACCOUNT <Account Type>";
+                    if (parts.length != 2) {
+                        return "FAIL: Invalid command format";
                     }
                     return newAccount(customer, parts[1]);
 
                 case "PAY":
-                    if (parts.length < 3) {
-                        return "FAIL: Missing arguments. PAY must be run as PAY <Recipient Name> <Amount>";
-                    }
-                    if (parts.length > 3) {
-                        return "FAIL: Too many arguments entered. PAY must be run as PAY <Recipient Name> <Amount>";
+                    if (parts.length != 3) {
+                        return "FAIL: Invalid command format";
                     }
 
                     try {
@@ -102,44 +94,42 @@ public class NewBank {
                         double amount = Double.parseDouble(parts[2]);
                         return pay(customer, recipientName, amount);
                     } catch (NumberFormatException e) {
-                        return "FAIL: Amount must be a valid number";
+                        return "FAIL: Invalid command format";
                     }
-                
+
                 case "MOVE":
-                    if (parts.length == 4) {
-                        try {
-                            double amount = Double.parseDouble(parts[1]);
-                            String fromAccount = parts[2];
-                            String toAccount = parts[3];
-                            return move(customer, amount, fromAccount, toAccount);
-                        } catch (NumberFormatException e) {
-                            return "FAIL: Amount must be a valid number";
-                        }
+                    if (parts.length != 4) {
+                        return "FAIL: Invalid command format";
                     }
-                    return "FAIL: Insufficient arguments entered. MOVE must be run as MOVE <Amount> <Source Account Name> <Destination Account Name> ";
-                
+                    try {
+                        double amount = Double.parseDouble(parts[1]);
+                        String fromAccount = parts[2];
+                        String toAccount = parts[3];
+                        return move(customer, amount, fromAccount, toAccount);
+                    } catch (NumberFormatException e) {
+                        return "FAIL: Invalid command format";
+                    }
+
                 case "CLOSEACCOUNT":
-                    if (parts.length == 1) {
-                        return "FAIL: Please specify an account name to close. e.g. CLOSEACCOUNT <AccountName>";
+                    if (parts.length != 2) {
+                        return "FAIL: Invalid command format";
                     }
-                    if (parts.length == 2) {
-                        Customer accountHolder = customers.get(customer.getKey());
-                        String accountName = parts[1];
-                        String result = accountHolder.removeAccount(accountName);
-                        if (result.startsWith("SUCCESS")) {
-                            logTransaction(accountHolder, customer.getKey(), "Closed account: " + accountName);
-                        }
-                        return result;
+                    Customer accountHolder = customers.get(customer.getKey());
+                    String accountName = parts[1];
+                    String result = accountHolder.removeAccount(accountName);
+                    if (result.startsWith("SUCCESS")) {
+                        logTransaction(accountHolder, customer.getKey(), "Closed account: " + accountName);
                     }
-                        
+                    return result;
+
                 case "LOGOUT":
                 return "SUCCESS: Logged out";
-                
+
                 case "HELP":
                 return getHelpText();
-                
+
               default:
-                    return "FAIL: Unknown command. Type HELP for a list of commands.";
+                    return "FAIL: Invalid command format";
             }
         }
 
@@ -204,7 +194,7 @@ public class NewBank {
         customer.addTransaction(fullTransaction);
         transactionLog.saveTransactions(customerName, customer.getTransactionHistoryList());
     }
-    
+
     private String showMyAccounts(CustomerID customer) {
         return customers.get(customer.getKey()).accountsToString();
     }
@@ -218,14 +208,56 @@ public class NewBank {
         return String.join("\n", account.getTransactions());
     }
 
-    private String newAccount(CustomerID customer, String accountName) {
-        Customer c = customers.get(customer.getKey());
+    /**
+	 * Validates account name format according to FR1.4 requirements:
+	 * - Must not be null
+	 * - Must be 3-20 characters long
+	 * - Must contain only alphanumeric characters
+	 *
+	 * @param accountName The account name to validate
+	 * @return null if valid, error message if invalid
+	 */
+	private String validateAccountName(String accountName) {
+		if (accountName == null) {
+			return "FAIL: Account name cannot be null";
+		}
+
+		if (accountName.length() < 3 || accountName.length() > 20) {
+			return "FAIL: Account name must be 3-20 characters";
+		}
+
+		if (!accountName.matches("[a-zA-Z0-9]+")) {
+			return "FAIL: Account name must be alphanumeric only";
+		}
+
+		return null;
+	}
+
+	/**
+	 * FR1: Account Creation - Creates a new account for the customer.
+	 * FR1.1: Accepts command in format NEWACCOUNT <AccountName>
+	 * FR1.2: Creates account with default balance of £0.00
+	 * FR1.3: Returns SUCCESS if created, or FAIL if account already exists
+	 * FR1.4: Account names must be alphanumeric, 3-20 characters, case-insensitive
+	 */
+	private String newAccount(CustomerID customer, String accountName) {
+		// FR1.4: Validate account name format
+		String validationError = validateAccountName(accountName);
+		if (validationError != null) {
+			return validationError;
+		}
+
+		Customer c = customers.get(customer.getKey());
+
+		// FR1.3: Check if account already exists (case-insensitive via hasAccount)
         if(c.hasAccount(accountName)) {
-            return "FAIL";
-        }
-        c.addAccount(new Account(accountName, 0.0));
-        logTransaction(c, customer.getKey(), "Created account: " + accountName);
-        return "SUCCESS";
+            return "FAIL: Account with name '" + accountName + "' already exists";
+		}
+
+		// FR1.2: Create account with £0.00 balance
+		c.addAccount(new Account(accountName, 0.0));
+		logTransaction(c, customer.getKey(), "Created account: " + accountName);
+        return "SUCCESS: Account '" + accountName + "' created with balance £0.00";
     }
 
     // Transfer method to be used by both Pay and Move methods
@@ -237,7 +269,7 @@ public class NewBank {
         if (outcome == Account.DebitOutcome.SUCCESS){
             destinationAccount.credit(amount);
         }
-        
+
         return outcome;
     }
 
@@ -246,13 +278,13 @@ public class NewBank {
         switch(outcome){
             case SUCCESS:
                 return "SUCCESS: Transferred " + amount + " from " + source.getAccountName() + " to " + destination.getAccountName() + ". " + source.getAccountName() + "'s new balance is: " + source.getAccountBalance();
-            
+
             case NON_POSITIVE_AMOUNT:
                 return "FAIL: Amount must be positive";
 
             case INSUFFICIENT_FUNDS:
                 return "FAIL: Insufficient funds";
-            
+
             default:
                 return "FAIL: Unknown error";
 
@@ -281,15 +313,15 @@ public class NewBank {
 
         // Log transaction for both parties
         if (outcome == Account.DebitOutcome.SUCCESS) {
-            logTransaction(sender, customer.getKey(), 
+            logTransaction(sender, customer.getKey(),
                 String.format("Paid £%.2f to %s", amount, recipientName));
-            logTransaction(recipient, recipientName, 
+            logTransaction(recipient, recipientName,
                 String.format("Received £%.2f from %s", amount, customer.getKey()));
         }
 
         return transferOutcomeString(outcome, amount, senderAccount, recipientAccount);
     }
-    
+
     private String move(CustomerID customer, double amount, String fromAccount, String toAccount) {
         Customer c = customers.get(customer.getKey());
         Account from = c.getAccountByName(fromAccount);
@@ -308,17 +340,17 @@ public class NewBank {
 
         // Attempt to debit fromAccount - CALL TRANSFER INSTEAD
         Account.DebitOutcome outcome = transfer(from, to, amount);
-        
+
         // Log transaction if successful
         if (outcome == Account.DebitOutcome.SUCCESS) {
-            logTransaction(c, customer.getKey(), 
+            logTransaction(c, customer.getKey(),
                 String.format("Moved £%.2f from %s to %s", amount, fromAccount, toAccount));
         }
 
         return transferOutcomeString(outcome, amount, from, to);
     }
 
-    
+
     private String getHelpText() {
         return "AVAILABLE COMMANDS:\n"
         + "---------------------------------\n"
