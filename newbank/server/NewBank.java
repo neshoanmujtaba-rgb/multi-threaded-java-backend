@@ -63,6 +63,10 @@ public class NewBank {
     }
 
     public synchronized String processRequest(CustomerID customer, String request) {
+        if(request == null || request.trim().isEmpty()) {
+            return "FAIL: Invalid command format";
+        }
+        
         if (customers.containsKey(customer.getKey())) {
             String[] parts = request.split(" ");
             String command = parts[0].toUpperCase();
