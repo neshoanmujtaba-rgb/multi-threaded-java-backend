@@ -8,12 +8,12 @@ public class NewBank {
 
     private static final NewBank bank = new NewBank();
     private HashMap<String, Customer> customers;
-    private AccountManager authManager;
+    private UserAccountManager authManager;
     private TransactionLog transactionLog;
 
     private NewBank() {
         customers = new HashMap<>();
-        authManager = new AccountManager();
+        authManager = new UserAccountManager();
         transactionLog = new TransactionLog();
         addTestData();
     }
