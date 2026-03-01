@@ -25,7 +25,6 @@ public class NewBankClientHandler extends Thread{
 	private PrintWriter out;
 
 	// Track failed login attempts to implement security lockout mechanism
-	// Counter for number of consecutive failed login attempts for this session
 	private int failedAttempts = 0;
 	// Static constant defining the maximum login attempts allowed before lockout
 	private static final int MAX_ATTEMPTS = 3;
